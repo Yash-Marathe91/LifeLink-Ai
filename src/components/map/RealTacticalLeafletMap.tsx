@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Incident, ResponderTeam, NetworkRelayNode } from '@/lib/types';
-import { Search, Navigation, Compass, Crosshair, Layers, MapPin } from 'lucide-react';
+import { Search, Navigation, Compass, Crosshair, MapPin } from 'lucide-react';
 import { StatusBadge } from '../common/StatusBadge';
 
 interface RealTacticalLeafletMapProps {
@@ -24,15 +24,15 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
   const markersRef = useRef<{ [key: string]: any }>({});
   const polylineRef = useRef<any>(null);
 
-  const [mapMode, setMapMode] = useState<'CARTO_DARK' | 'GOOGLE_SATELLITE' | 'MAPBOX_DARK'>('CARTO_DARK');
+  const [mapMode, setMapMode] = useState<'ESRI_DARK' | 'GOOGLE_SATELLITE' | 'MAPBOX_DARK'>('ESRI_DARK');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(incidents[0] || null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [geocodedAddress, setGeocodedAddress] = useState<string | null>(null);
   const [activeRoute, setActiveRoute] = useState<{ distanceKm: string; durationMins: string } | null>(null);
 
-  // Switch Tile Server Layer
-  const changeTileServer = (mode: 'CARTO_DARK' | 'GOOGLE_SATELLITE' | 'MAPBOX_DARK') => {
+  // Switch Tile Server Layer (Esri Dark Canvas vs Google Maps Satellite vs Mapbox)
+  const changeTileServer = (mode: 'ESRI_DARK' | 'GOOGLE_SATELLITE' | 'MAPBOX_DARK') => {
     setMapMode(mode);
     if (!mapInstanceRef.current || typeof window === 'undefined') return;
 
@@ -42,19 +42,18 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
         map.removeLayer(tileLayerRef.current);
       }
 
-      let newTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-      let subdomains = 'abcd';
-      let attribution = '&copy; CARTO &copy; OSM';
+      // ESRI Dark Gray Canvas — 100% Free, NO Key, NO Watermark!
+      let newTileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}';
+      let subdomains = '';
+      let attribution = '&copy; Esri, HERE, Garmin, FAO, NOAA';
 
       if (mode === 'GOOGLE_SATELLITE') {
         newTileUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
-        subdomains = '';
         attribution = '&copy; Google Maps';
       } else if (mode === 'MAPBOX_DARK') {
         const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
         if (mapboxToken) {
           newTileUrl = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`;
-          subdomains = '';
           attribution = '&copy; Mapbox &copy; OpenStreetMap';
         }
       }
@@ -62,9 +61,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       const newTileLayer = L.tileLayer(newTileUrl, {
         attribution: attribution,
         subdomains: subdomains,
-        maxZoom: 20,
-        tileSize: mode === 'MAPBOX_DARK' ? 512 : 256,
-        zoomOffset: mode === 'MAPBOX_DARK' ? -1 : 0,
+        maxZoom: 19,
       }).addTo(map);
 
       tileLayerRef.current = newTileLayer;
@@ -93,9 +90,9 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
           zoomControl: false,
         });
 
-        const initialTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; CARTO &copy; OSM',
-          subdomains: 'abcd',
+        // Use Esri World Dark Gray Canvas: ZERO key, ZERO watermark!
+        const initialTileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+          attribution: '&copy; Esri, HERE, Garmin, FAO, NOAA',
           maxZoom: 19,
         }).addTo(map);
 
@@ -305,8 +302,8 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
               <Compass className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#F5F7F8]">LIFELINK GOOGLE / MAPBOX & OPENCAGE GIS STAGE</h2>
-              <p className="text-[11px] font-mono text-[#8f9194]">OPENCAGE GEOCODER • GOOGLE SATELLITE • MAPBOX READY • OSRM ROUTING</p>
+              <h2 className="text-sm font-bold text-[#F5F7F8]">LIFELINK WATERMARK-FREE GIS STAGE</h2>
+              <p className="text-[11px] font-mono text-[#8f9194]">ESRI WATERMARK-FREE DARK GIS • GOOGLE SATELLITE • OPENCAGE GEOCODER</p>
             </div>
           </div>
 
@@ -314,12 +311,12 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
             {/* Tile Layer Selector */}
             <div className="flex items-center gap-1 bg-[#050607] p-1 rounded-lg border border-[#1D252C] text-xs font-mono">
               <button
-                onClick={() => changeTileServer('CARTO_DARK')}
+                onClick={() => changeTileServer('ESRI_DARK')}
                 className={`px-2 py-0.5 rounded transition-all ${
-                  mapMode === 'CARTO_DARK' ? 'bg-[#36C5F0] text-black font-bold' : 'text-[#8f9194] hover:text-white'
+                  mapMode === 'ESRI_DARK' ? 'bg-[#36C5F0] text-black font-bold' : 'text-[#8f9194] hover:text-white'
                 }`}
               >
-                🌙 CARTO DARK
+                🌙 ESRI DARK (CLEAN)
               </button>
               <button
                 onClick={() => changeTileServer('GOOGLE_SATELLITE')}

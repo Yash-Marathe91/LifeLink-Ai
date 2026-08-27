@@ -1,0 +1,29 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# testing & logs
+/coverage
+*.log
+
+# next.js & builds
+/.next/
+/out/
+/build
+
+# local sqlite databases & cache
+*.db
+lifelink_ai.db
+__pycache__/
+*.pyc
+
+# environment variables (ignore local secret files)
+.env.local
+.env*.local
+!.env.example
+
+# OS & IDE
+.DS_Store
+.vscode
+.idea

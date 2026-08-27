@@ -69,16 +69,18 @@ export default function LoginPage() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-[#36C5F0]/10 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-[400px] h-[300px] bg-[#FF3B30]/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Header Brand Info */}
+      {/* Header Brand Info (NO BORDER LOGO, ENLARGED) */}
       <div className="sm:mx-auto sm:w-full sm:max-w-md z-10 text-center">
         <div className="flex items-center justify-center gap-3 mb-3">
-          <div className="relative w-12 h-12 rounded-xl bg-[#0b0e11] border border-[#36C5F0]/40 p-2 shadow-[0_0_20px_rgba(54,197,240,0.3)] flex items-center justify-center">
+          {/* Enlarged Logo without Border */}
+          <div className="relative w-16 h-16 flex items-center justify-center drop-shadow-[0_0_20px_rgba(54,197,240,0.5)] transition-transform hover:scale-105">
             <Image
               src="/images/logo.png"
               alt="LifeLink AI Logo"
-              width={40}
-              height={40}
+              width={64}
+              height={64}
               className="object-contain"
+              priority
             />
           </div>
           <span className="text-2xl font-black text-white tracking-wider font-mono">
@@ -143,9 +145,9 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="e.g. dispatcher@lifelink.ai"
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#050607] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] font-mono"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#050607] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] font-mono"
                 />
-                <Mail className="w-4 h-4 text-[#8f9194] absolute left-3 top-2.5" />
+                <Mail className="w-4 h-4 text-[#8f9194] absolute left-3 top-3" />
               </div>
             </div>
 
@@ -160,9 +162,9 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#050607] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] font-mono"
+                  className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#050607] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] font-mono"
                 />
-                <Lock className="w-4 h-4 text-[#8f9194] absolute left-3 top-2.5" />
+                <Lock className="w-4 h-4 text-[#8f9194] absolute left-3 top-3" />
               </div>
             </div>
 

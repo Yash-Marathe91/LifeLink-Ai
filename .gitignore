@@ -19,8 +19,10 @@ __pycache__/
 *.pyc
 
 # environment variables (ignore local secret files)
+.env
 .env.local
 .env*.local
+backend/.env
 !.env.example
 
 # OS & IDE

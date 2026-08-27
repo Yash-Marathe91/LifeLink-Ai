@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --background: #090d14;
+    --foreground: #f8fafc;
+    
+    --surface-dark: #0f172a;
+    --surface-elevated: #1e293b;
+    --surface-card: #131c2e;
+    --surface-border: #1e293b;
+    --surface-border-bright: #334155;
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    
+    --accent-cyan: #0ea5e9;
+    --accent-cyan-glow: rgba(14, 165, 233, 0.15);
+    
+    --emergency-red: #ef4444;
+    --emergency-red-glow: rgba(239, 68, 68, 0.15);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--text-primary);
+    font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  .font-mono {
+    font-family: var(--font-geist-mono), 'JetBrains Mono', monospace;
+  }
+}
+
+/* Custom Minimalist Dark Theme Utilities */
+.bg-lifelink-bg { background-color: #090d14; }
+.bg-lifelink-surface { background-color: #0f172a; }
+.bg-lifelink-elevated { background-color: #1e293b; }
+.bg-lifelink-card { background-color: #131c2e; }
+.border-lifelink { border-color: #1e293b; }
+.border-lifelink-bright { border-color: #334155; }
+
+.text-lifelink-accent { color: #0ea5e9; }
+.text-lifelink-red { color: #ef4444; }
+.text-lifelink-muted { color: #64748b; }
+
+/* Subtle pulse animation for active emergency SOS */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom Minimal Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090d14;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}

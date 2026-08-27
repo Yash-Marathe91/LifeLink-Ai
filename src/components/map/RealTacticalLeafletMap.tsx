@@ -24,7 +24,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
   const markersRef = useRef<{ [key: string]: any }>({});
   const polylineRef = useRef<any>(null);
 
-  const [mapMode, setMapMode] = useState<'CARTO_DARK' | 'GOOGLE_SATELLITE'>('CARTO_DARK');
+  const [mapMode, setMapMode] = useState<'CARTO_DARK' | 'GOOGLE_SATELLITE' | 'MAPBOX_DARK'>('CARTO_DARK');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(incidents[0] || null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
@@ -32,7 +32,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
   const [activeRoute, setActiveRoute] = useState<{ distanceKm: string; durationMins: string } | null>(null);
 
   // Switch Tile Server Layer
-  const changeTileServer = (mode: 'CARTO_DARK' | 'GOOGLE_SATELLITE') => {
+  const changeTileServer = (mode: 'CARTO_DARK' | 'GOOGLE_SATELLITE' | 'MAPBOX_DARK') => {
     setMapMode(mode);
     if (!mapInstanceRef.current || typeof window === 'undefined') return;
 
@@ -44,16 +44,27 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
 
       let newTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
       let subdomains = 'abcd';
+      let attribution = '&copy; CARTO &copy; OSM';
 
       if (mode === 'GOOGLE_SATELLITE') {
         newTileUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
         subdomains = '';
+        attribution = '&copy; Google Maps';
+      } else if (mode === 'MAPBOX_DARK') {
+        const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || '';
+        if (mapboxToken) {
+          newTileUrl = `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=${mapboxToken}`;
+          subdomains = '';
+          attribution = '&copy; Mapbox &copy; OpenStreetMap';
+        }
       }
 
       const newTileLayer = L.tileLayer(newTileUrl, {
-        attribution: mode === 'GOOGLE_SATELLITE' ? '&copy; Google Maps' : '&copy; CARTO &copy; OSM',
+        attribution: attribution,
         subdomains: subdomains,
         maxZoom: 20,
+        tileSize: mode === 'MAPBOX_DARK' ? 512 : 256,
+        zoomOffset: mode === 'MAPBOX_DARK' ? -1 : 0,
       }).addTo(map);
 
       tileLayerRef.current = newTileLayer;
@@ -247,7 +258,6 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
     const openCageKey = process.env.NEXT_PUBLIC_OPENCAGE_API_KEY || '93b4ed5c6a9c41a79f2fbf83c5b04a93';
 
     try {
-      // Primary: OpenCage Geocoding API
       const res = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(searchQuery)}&key=${openCageKey}&limit=1`);
       const data = await res.json();
 
@@ -263,7 +273,6 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
           mapInstanceRef.current.flyTo([lat, lng], 15, { duration: 1.5 });
         }
       } else {
-        // Fallback: Nominatim OpenStreetMap
         const fallbackRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
         const fallbackData = await fallbackRes.json();
 
@@ -289,15 +298,15 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       {/* Map Main Stage Container */}
       <div className="flex-1 bg-[#050607] border border-[#1D252C] rounded-xl relative overflow-hidden flex flex-col">
         
-        {/* Map Header Toolbar & OpenCage Geocoder */}
+        {/* Map Header Toolbar */}
         <div className="p-3 bg-[#0b0e11]/90 backdrop-blur-md border-b border-[#1D252C] z-20 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30">
               <Compass className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#F5F7F8]">OPENCAGE GEOCODING & GOOGLE MAPS GIS STAGE</h2>
-              <p className="text-[11px] font-mono text-[#8f9194]">OPENCAGE HIGH-PRECISION GEOCODER • GOOGLE SATELLITE • OSRM ROUTING</p>
+              <h2 className="text-sm font-bold text-[#F5F7F8]">LIFELINK GOOGLE / MAPBOX & OPENCAGE GIS STAGE</h2>
+              <p className="text-[11px] font-mono text-[#8f9194]">OPENCAGE GEOCODER • GOOGLE SATELLITE • MAPBOX READY • OSRM ROUTING</p>
             </div>
           </div>
 
@@ -320,6 +329,14 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
               >
                 🛰️ GOOGLE SATELLITE
               </button>
+              <button
+                onClick={() => changeTileServer('MAPBOX_DARK')}
+                className={`px-2 py-0.5 rounded transition-all ${
+                  mapMode === 'MAPBOX_DARK' ? 'bg-[#8B7CFF] text-black font-bold' : 'text-[#8f9194] hover:text-white'
+                }`}
+              >
+                🗺️ MAPBOX DARK
+              </button>
             </div>
 
             {/* Address Search */}
@@ -327,10 +344,10 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search location (OpenCage API)..."
+                  placeholder="Search location..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 pr-2 py-1 rounded-lg bg-[#050607] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] w-40 sm:w-56 font-mono"
+                  className="pl-7 pr-2 py-1 rounded-lg bg-[#050607] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] w-36 sm:w-48 font-mono"
                 />
                 <Search className="w-3 h-3 text-[#8f9194] absolute left-2 top-2" />
               </div>
@@ -364,7 +381,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
               <Navigation className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <span className="text-[#36C5F0] font-bold block">OPENCAGE GIS / OSRM NEON ROUTE PATH</span>
+              <span className="text-[#36C5F0] font-bold block">TACTICAL GIS / OSRM NEON ROUTE PATH</span>
               <span className="text-white font-bold">{activeRoute.distanceKm} km</span>
               <span className="text-[#8f9194] ml-2">• ETA: {activeRoute.durationMins} mins</span>
             </div>

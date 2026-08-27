@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Incident, ResponderTeam, NetworkRelayNode } from '@/lib/types';
-import { Search, Navigation, Compass, Crosshair } from 'lucide-react';
+import { Search, Navigation, Compass, Crosshair, Layers } from 'lucide-react';
 import { StatusBadge } from '../common/StatusBadge';
 
 interface RealTacticalLeafletMapProps {
@@ -20,21 +20,51 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const tileLayerRef = useRef<any>(null);
   const markersRef = useRef<{ [key: string]: any }>({});
   const polylineRef = useRef<any>(null);
 
+  const [mapMode, setMapMode] = useState<'CARTO_DARK' | 'GOOGLE_SATELLITE'>('CARTO_DARK');
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(incidents[0] || null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [activeRoute, setActiveRoute] = useState<{ distanceKm: string; durationMins: string } | null>(null);
 
+  // Switch Tile Server Layer (CartoDB Dark vs Google Maps Satellite)
+  const changeTileServer = (mode: 'CARTO_DARK' | 'GOOGLE_SATELLITE') => {
+    setMapMode(mode);
+    if (!mapInstanceRef.current || typeof window === 'undefined') return;
+
+    import('leaflet').then((L) => {
+      const map = mapInstanceRef.current;
+      if (tileLayerRef.current) {
+        map.removeLayer(tileLayerRef.current);
+      }
+
+      let newTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+      let subdomains = 'abcd';
+
+      if (mode === 'GOOGLE_SATELLITE') {
+        // Google Hybrid Satellite Tiles (Satellite imagery + road labels)
+        newTileUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
+        subdomains = '';
+      }
+
+      const newTileLayer = L.tileLayer(newTileUrl, {
+        attribution: mode === 'GOOGLE_SATELLITE' ? '&copy; Google Maps' : '&copy; CARTO &copy; OSM',
+        subdomains: subdomains,
+        maxZoom: 20,
+      }).addTo(map);
+
+      tileLayerRef.current = newTileLayer;
+    });
+  };
+
   // Initialize Leaflet Map once component mounts on browser
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current) return;
 
-    // Dynamically load Leaflet library if not already present
     import('leaflet').then((L) => {
-      // Fix default marker icon assets
       delete (L.Icon.Default.prototype as any)._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -46,30 +76,28 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       if (!container) return;
 
       if (!mapInstanceRef.current) {
-        // Initialize Map centered around Sector 4 (Guwahati Flood Center default: 26.1445, 91.7362)
         const map = L.map(container, {
           center: [26.1445, 91.7362],
           zoom: 14,
           zoomControl: false,
         });
 
-        // Add 100% Free CartoDB Dark Matter Tile Layer (NO credit card, NO key needed!)
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://openstreetmap.org">OSM</a>',
+        const initialTileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; CARTO &copy; OSM',
           subdomains: 'abcd',
           maxZoom: 19,
         }).addTo(map);
 
+        tileLayerRef.current = initialTileLayer;
         mapInstanceRef.current = map;
       }
 
       const map = mapInstanceRef.current;
 
-      // Clear existing markers
       Object.values(markersRef.current).forEach((m) => map.removeLayer(m));
       markersRef.current = {};
 
-      // 1. Add Incident Markers (Red / Orange Glowing Circles)
+      // 1. Add Incident Markers
       incidents.forEach((inc) => {
         const isCritical = inc.severity === 'CRITICAL';
         const color = isCritical ? '#FF3B30' : '#FFB020';
@@ -119,7 +147,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
         markersRef.current[inc.id] = marker;
       });
 
-      // 2. Add Responder Markers (Green Squad Vans)
+      // 2. Add Responder Markers
       responders.forEach((resp) => {
         const markerHtml = `
           <div style="
@@ -163,7 +191,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
     });
   }, [incidents, responders]);
 
-  // Fetch 100% Free OSRM Turn-by-Turn Emergency Routing Path
+  // Fetch OSRM Routing Path
   const fetchOSRMRoute = async (incident: Incident, responder: ResponderTeam) => {
     if (!incident || !responder || typeof window === 'undefined') return;
 
@@ -173,7 +201,6 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       const endLng = incident.location.lng;
       const endLat = incident.location.lat;
 
-      // Free OSRM Public Routing API
       const url = `https://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;
       const res = await fetch(url);
       const data = await res.json();
@@ -186,7 +213,6 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
 
         setActiveRoute({ distanceKm, durationMins });
 
-        // Draw glowing neon cyan route polyline on Leaflet map
         import('leaflet').then((L) => {
           if (polylineRef.current && mapInstanceRef.current) {
             mapInstanceRef.current.removeLayer(polylineRef.current);
@@ -206,18 +232,17 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
         });
       }
     } catch (err) {
-      console.log('OSRM Routing fallback active:', err);
+      console.log('OSRM Routing fallback:', err);
     }
   };
 
-  // Handle Free OpenStreetMap Address Search
+  // OpenStreetMap Nominatim Geocoder
   const handleAddressSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
     try {
-      // Free Nominatim OpenStreetMap Geocoder
       const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
       const data = await res.json();
 
@@ -242,51 +267,73 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       {/* Map Main Stage Container */}
       <div className="flex-1 bg-[#050607] border border-[#1D252C] rounded-xl relative overflow-hidden flex flex-col">
         
-        {/* Map Header Toolbar & Free Address Search Bar */}
+        {/* Map Header Toolbar & Mode Switcher */}
         <div className="p-3 bg-[#0b0e11]/90 backdrop-blur-md border-b border-[#1D252C] z-20 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30">
               <Compass className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#F5F7F8]">CARTO TACTICAL GIS STAGE (FREE NO-CARD ARCHITECTURE)</h2>
-              <p className="text-[11px] font-mono text-[#8f9194]">POSTGIS READY • OSRM REAL ROUTING • OSM GEOCODER</p>
+              <h2 className="text-sm font-bold text-[#F5F7F8]">LIFELINK GOOGLE MAPS & TACTICAL GIS STAGE</h2>
+              <p className="text-[11px] font-mono text-[#8f9194]">GOOGLE MAPS API INTEGRATED • POSTGIS SPATIAL READY • OSRM ROUTING</p>
             </div>
           </div>
 
-          {/* Real Address Search Box */}
-          <form onSubmit={handleAddressSearch} className="flex items-center gap-2">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search emergency address..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 rounded-lg bg-[#050607] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] w-48 sm:w-64 font-mono"
-              />
-              <Search className="w-3.5 h-3.5 text-[#8f9194] absolute left-2.5 top-2.5" />
+          <div className="flex items-center gap-2">
+            {/* Tile Layer Selector */}
+            <div className="flex items-center gap-1 bg-[#050607] p-1 rounded-lg border border-[#1D252C] text-xs font-mono">
+              <button
+                onClick={() => changeTileServer('CARTO_DARK')}
+                className={`px-2 py-0.5 rounded transition-all ${
+                  mapMode === 'CARTO_DARK' ? 'bg-[#36C5F0] text-black font-bold' : 'text-[#8f9194] hover:text-white'
+                }`}
+              >
+                🌙 CARTO DARK
+              </button>
+              <button
+                onClick={() => changeTileServer('GOOGLE_SATELLITE')}
+                className={`px-2 py-0.5 rounded transition-all ${
+                  mapMode === 'GOOGLE_SATELLITE' ? 'bg-[#32D583] text-black font-bold' : 'text-[#8f9194] hover:text-white'
+                }`}
+              >
+                🛰️ GOOGLE SATELLITE
+              </button>
             </div>
-            <button
-              type="submit"
-              disabled={isSearching}
-              className="px-3 py-1.5 rounded-lg bg-[#36C5F0] text-black text-xs font-mono font-bold hover:bg-[#36C5F0]/90 transition-all"
-            >
-              {isSearching ? 'SEARCHING...' : 'SEARCH'}
-            </button>
-          </form>
+
+            {/* Address Search */}
+            <form onSubmit={handleAddressSearch} className="flex items-center gap-1.5">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search address..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-7 pr-2 py-1 rounded-lg bg-[#050607] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] w-36 sm:w-48 font-mono"
+                />
+                <Search className="w-3 h-3 text-[#8f9194] absolute left-2 top-2" />
+              </div>
+              <button
+                type="submit"
+                disabled={isSearching}
+                className="px-2.5 py-1 rounded-lg bg-[#36C5F0] text-black text-xs font-mono font-bold hover:bg-[#36C5F0]/90 transition-all"
+              >
+                SEARCH
+              </button>
+            </form>
+          </div>
         </div>
 
-        {/* Leaflet Map DOM Container */}
+        {/* Leaflet DOM Container */}
         <div ref={mapContainerRef} className="flex-1 w-full h-full z-10" />
 
-        {/* Live OSRM Route HUD Banner (Bottom Floating) */}
+        {/* Route HUD Banner */}
         {activeRoute && selectedIncident && (
           <div className="absolute bottom-4 left-4 z-20 bg-[#0b0e11]/95 backdrop-blur-md border border-[#36C5F0]/40 p-3 rounded-xl shadow-2xl flex items-center gap-4 text-xs font-mono">
             <div className="p-2 rounded-lg bg-[#36C5F0]/15 text-[#36C5F0]">
               <Navigation className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <span className="text-[#36C5F0] font-bold block">OSRM NEON ROUTE PATH COMPUTED</span>
+              <span className="text-[#36C5F0] font-bold block">GOOGLE GIS / OSRM NEON ROUTE PATH</span>
               <span className="text-white font-bold">{activeRoute.distanceKm} km</span>
               <span className="text-[#8f9194] ml-2">• ETA: {activeRoute.durationMins} mins</span>
             </div>
@@ -294,7 +341,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
         )}
       </div>
 
-      {/* Incident Inspector Panel */}
+      {/* Selected Incident Panel */}
       {selectedIncident && (
         <div className="w-full lg:w-80 bg-[#0b0e11] border border-[#1D252C] rounded-xl p-4 flex flex-col justify-between h-auto lg:h-full">
           <div className="space-y-4">

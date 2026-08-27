@@ -1,3 +1,14 @@
+import sys
+import os
+
+# Add repository root and backend directory to sys.path for Render deployment import resolution
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
@@ -17,6 +28,7 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://localhost:8000",
+    "https://lifelink-ai-eta.vercel.app",
     "https://zjzlfuabmchbwzjeyqgf.supabase.co",
 ]
 

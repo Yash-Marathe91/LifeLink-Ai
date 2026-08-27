@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Incident, ResponderTeam, NetworkRelayNode } from '@/lib/types';
-import { Search, Navigation, Compass, Crosshair, Layers } from 'lucide-react';
+import { Search, Navigation, Compass, Crosshair, Layers, MapPin } from 'lucide-react';
 import { StatusBadge } from '../common/StatusBadge';
 
 interface RealTacticalLeafletMapProps {
@@ -28,9 +28,10 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(incidents[0] || null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [geocodedAddress, setGeocodedAddress] = useState<string | null>(null);
   const [activeRoute, setActiveRoute] = useState<{ distanceKm: string; durationMins: string } | null>(null);
 
-  // Switch Tile Server Layer (CartoDB Dark vs Google Maps Satellite)
+  // Switch Tile Server Layer
   const changeTileServer = (mode: 'CARTO_DARK' | 'GOOGLE_SATELLITE') => {
     setMapMode(mode);
     if (!mapInstanceRef.current || typeof window === 'undefined') return;
@@ -45,7 +46,6 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       let subdomains = 'abcd';
 
       if (mode === 'GOOGLE_SATELLITE') {
-        // Google Hybrid Satellite Tiles (Satellite imagery + road labels)
         newTileUrl = 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}';
         subdomains = '';
       }
@@ -60,7 +60,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
     });
   };
 
-  // Initialize Leaflet Map once component mounts on browser
+  // Initialize Leaflet Map
   useEffect(() => {
     if (typeof window === 'undefined' || !mapContainerRef.current) return;
 
@@ -236,27 +236,49 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
     }
   };
 
-  // OpenStreetMap Nominatim Geocoder
+  // High Precision OpenCage Geocoding Engine
   const handleAddressSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     setIsSearching(true);
+    setGeocodedAddress(null);
+
+    const openCageKey = process.env.NEXT_PUBLIC_OPENCAGE_API_KEY || '93b4ed5c6a9c41a79f2fbf83c5b04a93';
+
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+      // Primary: OpenCage Geocoding API
+      const res = await fetch(`https://api.opencagedata.com/geocode/v1/json?q=${encodeURIComponent(searchQuery)}&key=${openCageKey}&limit=1`);
       const data = await res.json();
 
-      if (data && data.length > 0) {
-        const result = data[0];
-        const lat = parseFloat(result.lat);
-        const lng = parseFloat(result.lon);
+      if (data && data.results && data.results.length > 0) {
+        const result = data.results[0];
+        const lat = result.geometry.lat;
+        const lng = result.geometry.lng;
+        const formatted = result.formatted;
+
+        setGeocodedAddress(formatted);
 
         if (mapInstanceRef.current) {
           mapInstanceRef.current.flyTo([lat, lng], 15, { duration: 1.5 });
         }
+      } else {
+        // Fallback: Nominatim OpenStreetMap
+        const fallbackRes = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+        const fallbackData = await fallbackRes.json();
+
+        if (fallbackData && fallbackData.length > 0) {
+          const lat = parseFloat(fallbackData[0].lat);
+          const lng = parseFloat(fallbackData[0].lon);
+          setGeocodedAddress(fallbackData[0].display_name);
+
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo([lat, lng], 15, { duration: 1.5 });
+          }
+        }
       }
     } catch (err) {
-      console.log('Address Search Error:', err);
+      console.log('OpenCage Geocoding Error:', err);
     } finally {
       setIsSearching(false);
     }
@@ -267,15 +289,15 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
       {/* Map Main Stage Container */}
       <div className="flex-1 bg-[#050607] border border-[#1D252C] rounded-xl relative overflow-hidden flex flex-col">
         
-        {/* Map Header Toolbar & Mode Switcher */}
+        {/* Map Header Toolbar & OpenCage Geocoder */}
         <div className="p-3 bg-[#0b0e11]/90 backdrop-blur-md border-b border-[#1D252C] z-20 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded bg-[#4C8DFF]/15 text-[#4C8DFF] border border-[#4C8DFF]/30">
               <Compass className="w-4 h-4" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-[#F5F7F8]">LIFELINK GOOGLE MAPS & TACTICAL GIS STAGE</h2>
-              <p className="text-[11px] font-mono text-[#8f9194]">GOOGLE MAPS API INTEGRATED • POSTGIS SPATIAL READY • OSRM ROUTING</p>
+              <h2 className="text-sm font-bold text-[#F5F7F8]">OPENCAGE GEOCODING & GOOGLE MAPS GIS STAGE</h2>
+              <p className="text-[11px] font-mono text-[#8f9194]">OPENCAGE HIGH-PRECISION GEOCODER • GOOGLE SATELLITE • OSRM ROUTING</p>
             </div>
           </div>
 
@@ -305,10 +327,10 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Search address..."
+                  placeholder="Search location (OpenCage API)..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-7 pr-2 py-1 rounded-lg bg-[#050607] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] w-36 sm:w-48 font-mono"
+                  className="pl-7 pr-2 py-1 rounded-lg bg-[#050607] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] w-40 sm:w-56 font-mono"
                 />
                 <Search className="w-3 h-3 text-[#8f9194] absolute left-2 top-2" />
               </div>
@@ -317,7 +339,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
                 disabled={isSearching}
                 className="px-2.5 py-1 rounded-lg bg-[#36C5F0] text-black text-xs font-mono font-bold hover:bg-[#36C5F0]/90 transition-all"
               >
-                SEARCH
+                {isSearching ? 'FINDING...' : 'GEOCODE'}
               </button>
             </form>
           </div>
@@ -326,6 +348,15 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
         {/* Leaflet DOM Container */}
         <div ref={mapContainerRef} className="flex-1 w-full h-full z-10" />
 
+        {/* OpenCage Formatted Address Result Pill */}
+        {geocodedAddress && (
+          <div className="absolute top-16 left-4 z-20 bg-[#0b0e11]/95 border border-[#32D583]/50 px-3 py-1.5 rounded-lg shadow-xl text-xs font-mono flex items-center gap-2 max-w-lg">
+            <MapPin className="w-4 h-4 text-[#32D583] shrink-0" />
+            <span className="text-[#32D583] font-bold">OPENCAGE:</span>
+            <span className="text-white truncate">{geocodedAddress}</span>
+          </div>
+        )}
+
         {/* Route HUD Banner */}
         {activeRoute && selectedIncident && (
           <div className="absolute bottom-4 left-4 z-20 bg-[#0b0e11]/95 backdrop-blur-md border border-[#36C5F0]/40 p-3 rounded-xl shadow-2xl flex items-center gap-4 text-xs font-mono">
@@ -333,7 +364,7 @@ export const RealTacticalLeafletMap: React.FC<RealTacticalLeafletMapProps> = ({
               <Navigation className="w-5 h-5 animate-pulse" />
             </div>
             <div>
-              <span className="text-[#36C5F0] font-bold block">GOOGLE GIS / OSRM NEON ROUTE PATH</span>
+              <span className="text-[#36C5F0] font-bold block">OPENCAGE GIS / OSRM NEON ROUTE PATH</span>
               <span className="text-white font-bold">{activeRoute.distanceKm} km</span>
               <span className="text-[#8f9194] ml-2">• ETA: {activeRoute.durationMins} mins</span>
             </div>

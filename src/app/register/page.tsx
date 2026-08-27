@@ -87,7 +87,7 @@ export default function RegisterPage() {
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) {
-      setErrorMsg('Please enter a valid phone number for SMS registration.');
+      setErrorMsg('Please enter a valid Indian phone number (+91).');
       return;
     }
 
@@ -134,8 +134,8 @@ export default function RegisterPage() {
     setErrorMsg(null);
 
     const googlePayload = {
-      email: 'citizen.new@lifelink.ai',
-      fullName: 'Google Authenticated Survivor',
+      email: 'aarav.patel@lifelink.in',
+      fullName: 'Aarav Patel (Citizen Survivor)',
       googleId: 'google_oauth_7718293819',
       idToken: 'demo_google_id_token_xyz_reg',
     };
@@ -152,7 +152,7 @@ export default function RegisterPage() {
   return (
     <div className="min-h-screen bg-[#050607] flex flex-col lg:flex-row text-[#F5F7F8] font-sans overflow-x-hidden">
       
-      {/* LEFT SIDE: Tactical Disaster Relief & System Info (Collapsible on Mobile Android) */}
+      {/* LEFT SIDE: Tactical Disaster Relief & System Info */}
       <div className="lg:w-1/2 relative bg-[#0b0e11] min-h-auto lg:min-h-screen flex flex-col justify-between p-6 sm:p-10 lg:p-14 overflow-hidden border-b lg:border-b-0 lg:border-r border-[#1D252C]">
         
         {/* Background Image */}
@@ -185,7 +185,7 @@ export default function RegisterPage() {
                 LIFELINK <span className="text-[#36C5F0]">AI</span>
               </span>
               <span className="text-[11px] font-mono text-[#8f9194] tracking-widest uppercase">
-                EMERGENCY DISASTER PLATFORM
+                NATIONAL DISASTER RESPONSE INFRASTRUCTURE
               </span>
             </div>
           </Link>
@@ -201,19 +201,19 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        {/* Hero Section Content (Always visible on desktop, toggleable on mobile) */}
+        {/* Hero Section Content */}
         <div className={`relative z-10 my-auto py-6 lg:py-10 max-w-lg ${showMobileHero ? 'block' : 'hidden lg:block'}`}>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#32D583]/10 border border-[#32D583]/30 text-xs font-mono text-[#32D583] mb-4 shadow-[0_0_15px_rgba(50,213,131,0.2)]">
             <Radio className="w-3.5 h-3.5 animate-pulse text-[#32D583]" />
-            <span>OFFLINE MESH & RBAC SECURITY READY</span>
+            <span>NDRF / SDRF / AIIMS COMPATIBLE MESH</span>
           </div>
 
           <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
-            Register for Mission-Critical Emergency Dispatch.
+            Register for Indian National Emergency Operations.
           </h1>
           
           <p className="mt-3 text-xs sm:text-sm text-[#8f9194] leading-relaxed">
-            Choose your preferred sign-up method: Complete Profile Form, 1-Step SMS OTP, or Google SSO.
+            Provision NDRF Commander, SDRF Responder, or Citizen Survivor credentials with BLE mesh triage capabilities.
           </p>
 
           <div className="mt-6 space-y-2.5 font-mono text-xs">
@@ -223,7 +223,7 @@ export default function RegisterPage() {
               </div>
               <div>
                 <span className="text-white font-bold block">Gemini 3.1 AI Triage</span>
-                <span className="text-[#8f9194]">Instant survivor risk calculation</span>
+                <span className="text-[#8f9194]">Automated Indian regional triage calculation</span>
               </div>
             </div>
 
@@ -232,7 +232,7 @@ export default function RegisterPage() {
                 <Radio className="w-4 h-4" />
               </div>
               <div>
-                <span className="text-white font-bold block">Resilient BLE Mesh Hops</span>
+                <span className="text-white font-bold block">Resilient Off-Grid BLE Mesh</span>
                 <span className="text-[#8f9194]">Zero-cellular emergency telemetry</span>
               </div>
             </div>
@@ -242,7 +242,7 @@ export default function RegisterPage() {
         {/* Footer */}
         <div className="relative z-10 pt-4 border-t border-[#1D252C]/60 hidden lg:flex items-center justify-between text-xs font-mono text-[#8f9194]">
           <span>AES-256 GCM ENCRYPTED</span>
-          <span>ANDROID & PWA COMPATIBLE</span>
+          <span>NDMA / GOVT COMPATIBLE</span>
         </div>
       </div>
 
@@ -254,14 +254,14 @@ export default function RegisterPage() {
           {/* Header */}
           <div className="text-left">
             <h2 className="text-xl sm:text-2xl font-extrabold text-[#F5F7F8] tracking-tight">
-              PROVISION NEW ACCOUNT
+              PROVISION RESPONDER / CITIZEN ACCOUNT
             </h2>
             <p className="text-xs text-[#8f9194] font-mono mt-0.5">
               CHOOSE SECURE REGISTRATION METHOD
             </p>
           </div>
 
-          {/* Registration Method Tabs — Android Touch Target Optimized */}
+          {/* Registration Method Tabs */}
           <div className="grid grid-cols-3 gap-1 p-1 bg-[#0b0e11] rounded-xl border border-[#1D252C] font-mono text-xs">
             <button
               type="button"
@@ -324,7 +324,7 @@ export default function RegisterPage() {
                     required
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
-                    placeholder="e.g. Commander Sarah Jenkins"
+                    placeholder="e.g. Commander Rajesh Sharma"
                     className="w-full pl-10 pr-3 py-3 rounded-xl bg-[#0b0e11] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#32D583] font-mono min-h-[48px]"
                   />
                   <User className="w-4 h-4 text-[#8f9194] absolute left-3.5 top-3.5" />
@@ -333,7 +333,7 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-xs font-mono text-[#c5c6ca] mb-1 font-bold">
-                  EMAIL ADDRESS *
+                  OFFICIAL EMAIL ADDRESS *
                 </label>
                 <div className="relative">
                   <input
@@ -341,7 +341,7 @@ export default function RegisterPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. sarah.jenkins@lifelink.ai"
+                    placeholder="e.g. rajesh.sharma@ndrf.gov.in"
                     className="w-full pl-10 pr-3 py-3 rounded-xl bg-[#0b0e11] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#32D583] font-mono min-h-[48px]"
                   />
                   <Mail className="w-4 h-4 text-[#8f9194] absolute left-3.5 top-3.5" />
@@ -368,14 +368,14 @@ export default function RegisterPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-mono text-[#c5c6ca] mb-1 font-bold">
-                    PHONE NUMBER
+                    INDIAN PHONE (+91)
                   </label>
                   <div className="relative">
                     <input
                       type="tel"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="+1 800-555-0199"
+                      placeholder="+91 98765 43210"
                       className="w-full pl-9 pr-2 py-3 rounded-xl bg-[#0b0e11] border border-[#1D252C] text-xs text-white placeholder-[#8f9194] focus:outline-none focus:border-[#32D583] font-mono min-h-[48px]"
                     />
                     <Phone className="w-3.5 h-3.5 text-[#8f9194] absolute left-3 top-4" />
@@ -391,10 +391,10 @@ export default function RegisterPage() {
                     onChange={(e) => setRole(e.target.value as UserRole)}
                     className="w-full px-3 py-3 rounded-xl bg-[#0b0e11] border border-[#1D252C] text-xs text-white focus:outline-none focus:border-[#32D583] font-mono min-h-[48px]"
                   >
-                    <option value="CITIZEN">CITIZEN</option>
-                    <option value="RESPONDER">RESPONDER</option>
-                    <option value="DISPATCHER">DISPATCHER</option>
-                    <option value="ADMIN">ADMIN</option>
+                    <option value="CITIZEN">CITIZEN (SURVIVOR)</option>
+                    <option value="RESPONDER">RESPONDER (SDRF)</option>
+                    <option value="DISPATCHER">DISPATCHER (NDRF)</option>
+                    <option value="ADMIN">ADMIN (NDMA)</option>
                   </select>
                 </div>
               </div>
@@ -430,7 +430,7 @@ export default function RegisterPage() {
                 <form onSubmit={handleRequestOTP} className="space-y-4">
                   <div>
                     <label className="block text-xs font-mono text-[#c5c6ca] mb-1 font-bold">
-                      PHONE NUMBER FOR SMS REGISTRATION
+                      INDIAN PHONE NUMBER (+91)
                     </label>
                     <div className="relative">
                       <input
@@ -438,7 +438,7 @@ export default function RegisterPage() {
                         required
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 800-555-0199"
+                        placeholder="+91 98765 43210"
                         className="w-full pl-10 pr-3 py-3 rounded-xl bg-[#0b0e11] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] font-mono min-h-[48px]"
                       />
                       <Phone className="w-4 h-4 text-[#8f9194] absolute left-3.5 top-3.5" />
@@ -450,7 +450,7 @@ export default function RegisterPage() {
                     disabled={isSubmitting}
                     className="w-full py-3.5 rounded-xl bg-[#36C5F0] text-black font-extrabold text-xs sm:text-sm hover:bg-[#36C5F0]/90 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(54,197,240,0.3)] font-mono min-h-[48px]"
                   >
-                    {isSubmitting ? <span>DISPATCHING SMS...</span> : <span>SEND VERIFICATION SMS</span>}
+                    {isSubmitting ? <span>DISPATCHING SMS...</span> : <span>SEND VERIFICATION SMS (+91)</span>}
                   </button>
                 </form>
               ) : (
@@ -497,7 +497,7 @@ export default function RegisterPage() {
               </div>
               <h3 className="text-sm font-bold text-white font-mono">FAST GOOGLE SSO REGISTRATION</h3>
               <p className="text-xs text-[#8f9194]">
-                Create a LifeLink emergency account in 1 click using your Google OpenID profile.
+                Create a LifeLink emergency account in 1 click using your Google profile.
               </p>
 
               <button

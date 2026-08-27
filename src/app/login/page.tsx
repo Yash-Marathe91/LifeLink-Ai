@@ -34,7 +34,7 @@ export default function LoginPage() {
   const [selectedRole, setSelectedRole] = useState<UserRole>('DISPATCHER');
 
   // SMS OTP State
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState('+91 98200 12345');
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [demoCodeNotice, setDemoCodeNotice] = useState<string | null>(null);
@@ -42,25 +42,25 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Quick Preset Selector for Password Mode
+  // Quick Preset Selector for Password Mode (Authentic Indian NDRF / SDRF / AIIMS Profiles)
   const handleSelectRolePreset = (role: UserRole) => {
     setSelectedRole(role);
     setErrorMsg(null);
     switch (role) {
       case 'DISPATCHER':
-        setEmail('dispatcher@lifelink.ai');
+        setEmail('commander.rajesh@ndrf.gov.in');
         setPassword('SecurePass123!');
         break;
       case 'RESPONDER':
-        setEmail('responder1@lifelink.ai');
+        setEmail('dr.ananya.deshmukh@sdrf.in');
         setPassword('SecurePass123!');
         break;
       case 'CITIZEN':
-        setEmail('citizen@lifelink.ai');
+        setEmail('aarav.patel@lifelink.in');
         setPassword('SecurePass123!');
         break;
       case 'ADMIN':
-        setEmail('admin@lifelink.ai');
+        setEmail('admin.mha@ndma.gov.in');
         setPassword('SecurePass123!');
         break;
     }
@@ -90,7 +90,7 @@ export default function LoginPage() {
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phone) {
-      setErrorMsg('Please enter a valid emergency phone number.');
+      setErrorMsg('Please enter a valid Indian emergency phone number (+91).');
       return;
     }
 
@@ -137,8 +137,8 @@ export default function LoginPage() {
     setErrorMsg(null);
 
     const googlePayload = {
-      email: 'citizen.google@lifelink.ai',
-      fullName: 'Google Authenticated Rescue User',
+      email: 'priya.sharma@lifelink.in',
+      fullName: 'Priya Sharma (Emergency Responder)',
       googleId: 'google_oauth_984128509128',
       idToken: 'demo_google_id_token_xyz',
     };
@@ -191,8 +191,8 @@ export default function LoginPage() {
           </span>
         </div>
         
-        <h2 className="text-lg sm:text-xl font-extrabold text-[#F5F7F8] tracking-tight">
-          MISSION COMMAND PORTAL AUTHENTICATION
+        <h2 className="text-lg sm:text-xl font-extrabold text-[#F5F7F8] tracking-tight uppercase">
+          NDRF & SDRF MISSION COMMAND PORTAL
         </h2>
         <p className="mt-1 text-xs text-[#8f9194] font-mono">
           SECURE MULTI-METHOD ENTRY • ANDROID & MOBILE OPTIMIZED
@@ -203,7 +203,7 @@ export default function LoginPage() {
       <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-md z-10">
         <div className="bg-[#0b0e11]/90 backdrop-blur-xl py-6 sm:py-8 px-4 sm:px-8 shadow-2xl border border-[#1D252C] rounded-2xl relative">
           
-          {/* Method Tabs Bar — Android 48px Touch Target Optimized */}
+          {/* Method Tabs Bar */}
           <div className="grid grid-cols-4 gap-1 p-1 bg-[#050607] rounded-xl border border-[#1D252C] mb-6 font-mono text-[11px]">
             <button
               type="button"
@@ -270,10 +270,10 @@ export default function LoginPage() {
           {authMethod === 'PASSWORD' && (
             <form className="space-y-4" onSubmit={handlePasswordSubmit}>
               
-              {/* Role Presets */}
+              {/* Role Presets (INDIAN AUTHORITIES & CITIZENS) */}
               <div>
                 <label className="block text-[11px] font-mono font-bold text-[#8f9194] mb-2 uppercase">
-                  RBAC ROLE PRESETS (1-CLICK TEST):
+                  AUTHORIZED INDIAN AGENCY PRESETS (1-CLICK TEST):
                 </label>
                 <div className="grid grid-cols-2 gap-2 text-xs font-mono">
                   {(['DISPATCHER', 'RESPONDER', 'CITIZEN', 'ADMIN'] as UserRole[]).map((r) => (
@@ -287,7 +287,7 @@ export default function LoginPage() {
                           : 'bg-[#050607] border-[#1D252C] text-[#8f9194] hover:text-white'
                       }`}
                     >
-                      <span>{r}</span>
+                      <span>{r === 'DISPATCHER' ? 'NDRF COMMAND' : r === 'RESPONDER' ? 'SDRF RESCUE' : r === 'CITIZEN' ? 'SURVIVOR' : 'NDMA ADMIN'}</span>
                       {selectedRole === r && <UserCheck className="w-3.5 h-3.5" />}
                     </button>
                   ))}
@@ -296,7 +296,7 @@ export default function LoginPage() {
 
               <div>
                 <label className="block text-xs font-mono text-[#c5c6ca] mb-1">
-                  EMAIL ADDRESS
+                  OFFICIAL EMAIL ADDRESS
                 </label>
                 <div className="relative">
                   <input
@@ -304,7 +304,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="e.g. dispatcher@lifelink.ai"
+                    placeholder="e.g. commander.rajesh@ndrf.gov.in"
                     className="w-full pl-10 pr-3 py-3 rounded-xl bg-[#050607] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#36C5F0] font-mono min-h-[48px]"
                   />
                   <Mail className="w-4 h-4 text-[#8f9194] absolute left-3.5 top-3.5" />
@@ -338,14 +338,14 @@ export default function LoginPage() {
             </form>
           )}
 
-          {/* METHOD 2: SMS OTP EMERGENCY LOGIN */}
+          {/* METHOD 2: SMS OTP EMERGENCY LOGIN (+91 INDIA) */}
           {authMethod === 'SMS_OTP' && (
             <div className="space-y-4">
               {!otpSent ? (
                 <form onSubmit={handleRequestOTP} className="space-y-4">
                   <div>
                     <label className="block text-xs font-mono text-[#c5c6ca] mb-1">
-                      EMERGENCY PHONE NUMBER
+                      INDIAN EMERGENCY PHONE NUMBER (+91)
                     </label>
                     <div className="relative">
                       <input
@@ -353,7 +353,7 @@ export default function LoginPage() {
                         required
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        placeholder="+1 800-555-0199"
+                        placeholder="+91 98200 12345"
                         className="w-full pl-10 pr-3 py-3 rounded-xl bg-[#050607] border border-[#1D252C] text-sm text-white placeholder-[#8f9194] focus:outline-none focus:border-[#32D583] font-mono min-h-[48px]"
                       />
                       <Phone className="w-4 h-4 text-[#8f9194] absolute left-3.5 top-3.5" />
@@ -365,7 +365,7 @@ export default function LoginPage() {
                     disabled={isSubmitting}
                     className="w-full py-3.5 rounded-xl bg-[#32D583] text-black font-extrabold text-xs sm:text-sm hover:bg-[#32D583]/90 transition-all flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(50,213,131,0.3)] font-mono min-h-[48px]"
                   >
-                    {isSubmitting ? <span>DISPATCHING SMS...</span> : <span>SEND EMERGENCY SMS CODE</span>}
+                    {isSubmitting ? <span>DISPATCHING SMS...</span> : <span>SEND EMERGENCY SMS CODE (+91)</span>}
                   </button>
                 </form>
               ) : (
@@ -412,7 +412,7 @@ export default function LoginPage() {
               </div>
               <h3 className="text-sm font-bold text-white font-mono">1-CLICK GOOGLE SSO AUTHENTICATION</h3>
               <p className="text-xs text-[#8f9194]">
-                Instant identity verification via Google OpenID Connect for authorized emergency staff.
+                Instant identity verification via Google OpenID Connect for Indian emergency personnel.
               </p>
 
               <button

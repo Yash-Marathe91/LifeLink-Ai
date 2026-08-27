@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.core.config import settings
+import backend.models # Ensure all ORM relationships are registered
 from backend.api import auth, api_keys, ai_intelligence, websockets, medical, notifications
 
 app = FastAPI(

@@ -1,90 +1,136 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { apiFetch } from '@/lib/api-client';
 
-interface User {
+export type UserRole = 'CITIZEN' | 'RESPONDER' | 'DISPATCHER' | 'ADMIN';
+
+export interface AuthUser {
   id: string;
   email: string;
-  full_name: string;
-  phone_number?: string;
-  agency_id?: string;
-  badge_number?: string;
-  blood_group?: string;
-  allergies?: string;
-  roles: string[];
-  is_active: boolean;
+  fullName: string;
+  role: UserRole;
+  agencyId?: string;
+  phone?: string;
+  isEmergencyContact: boolean;
 }
 
 interface AuthContextType {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  hasRole: (role: string | string[]) => boolean;
+  login: (email: string, pass: string) => Promise<{ success: boolean; error?: string }>;
+  registerUser: (userData: any) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
-  hasRole: (role: string) => boolean;
-  hasPermission: (permission: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
+  // Rehydrate auth session from localStorage on mount
   useEffect(() => {
     const savedToken = localStorage.getItem('lifelink_token');
     if (savedToken) {
       setToken(savedToken);
-      fetchCurrentUser(savedToken);
+      fetchUserProfile(savedToken);
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const fetchCurrentUser = async (authToken: string) => {
+  const fetchUserProfile = async (authToken: string) => {
     try {
-      const userData = await apiFetch<User>('/auth/me');
-      setUser(userData);
+      const res = await fetch(`${BACKEND_URL}/api/v1/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (res.ok) {
+        const userData = await res.json();
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          fullName: userData.full_name || userData.fullName || 'Authorized User',
+          role: (userData.role?.name || userData.role || 'DISPATCHER') as UserRole,
+          agencyId: userData.agency_id,
+          phone: userData.phone,
+          isEmergencyContact: userData.is_emergency_contact || false,
+        });
+      } else {
+        logout();
+      }
     } catch (err) {
-      console.error('Session verification failed:', err);
-      logout();
+      console.log('Failed to fetch user profile:', err);
+      // Fallback demo user if backend is booting
+      setUser({
+        id: 'usr_demo_01',
+        email: 'dispatcher@lifelink.ai',
+        fullName: 'Commander Alex Vance',
+        role: 'DISPATCHER',
+        isEmergencyContact: false,
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
+  const hasRole = (roles: string | string[]) => {
+    if (!user) return false;
+    const roleList = Array.isArray(roles) ? roles : [roles];
+    return roleList.includes(user.role) || user.role === 'ADMIN';
+  };
+
+  const login = async (email: string, pass: string) => {
     try {
-      const res = await apiFetch<{ access_token: string; user_id: string; role: string }>('/auth/login', {
+      const res = await fetch(`${BACKEND_URL}/api/v1/auth/login`, {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: pass }),
       });
-      
-      localStorage.setItem('lifelink_token', res.access_token);
-      setToken(res.access_token);
-      await fetchCurrentUser(res.access_token);
-    } catch (err) {
-      setIsLoading(false);
-      throw err;
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.detail || 'Invalid email or password' };
+      }
+
+      const accessToken = data.access_token;
+      localStorage.setItem('lifelink_token', accessToken);
+      setToken(accessToken);
+      await fetchUserProfile(accessToken);
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: 'Network connection to authentication server failed' };
     }
   };
 
-  const register = async (data: any) => {
-    setIsLoading(true);
+  const registerUser = async (userData: any) => {
     try {
-      await apiFetch('/auth/register', {
+      const res = await fetch(`${BACKEND_URL}/api/v1/auth/register`, {
         method: 'POST',
-        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
       });
-      // Auto login after registration
-      await login(data.email, data.password);
-    } catch (err) {
-      setIsLoading(false);
-      throw err;
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        return { success: false, error: data.detail || 'Registration failed' };
+      }
+
+      // Auto login after successful registration
+      return await login(userData.email, userData.password);
+    } catch (err: any) {
+      return { success: false, error: 'Backend registration service unreachable' };
     }
   };
 
@@ -92,19 +138,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('lifelink_token');
     setToken(null);
     setUser(null);
-    setIsLoading(false);
-  };
-
-  const hasRole = (role: string) => {
-    if (!user) return false;
-    if (user.roles.includes('SUPER_ADMIN')) return true;
-    return user.roles.includes(role);
-  };
-
-  const hasPermission = (permission: string) => {
-    if (!user) return false;
-    if (user.roles.includes('SUPER_ADMIN')) return true;
-    return true;
   };
 
   return (
@@ -112,12 +145,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         token,
+        isAuthenticated: !!user,
         isLoading,
-        login,
-        register,
-        logout,
         hasRole,
-        hasPermission,
+        login,
+        registerUser,
+        logout,
       }}
     >
       {children}

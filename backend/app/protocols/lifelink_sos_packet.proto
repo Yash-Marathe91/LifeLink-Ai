@@ -1,0 +1,92 @@
+syntax = "proto3";
+
+package lifelink.mesh;
+
+// LifeLink AI Compact SOS Packet for Bluetooth LE Mesh & Delay-Tolerant Networking
+// Designed to pack within < 180 bytes (unfragmented BLE MTU) for maximum multi-hop resilience.
+
+enum EmergencyType {
+  EMERGENCY_UNKNOWN = 0;
+  EMERGENCY_MEDICAL = 1;
+  EMERGENCY_FLOOD_DROWNING = 2;
+  EMERGENCY_FIRE_SMOKE = 3;
+  EMERGENCY_EARTHQUAKE_TRAPPED = 4;
+  EMERGENCY_STRUCTURAL_COLLAPSE = 5;
+  EMERGENCY_LANDSLIDE = 6;
+  EMERGENCY_EVACUATION_NEEDED = 7;
+}
+
+enum MedicalUrgency {
+  MEDICAL_NONE = 0;
+  MEDICAL_MINOR_INJURY = 1;
+  MEDICAL_SEVERE_TRAUMA_BLEEDING = 2;
+  MEDICAL_HYPOTHERMIA_SHOCK = 3;
+  MEDICAL_CRITICAL_OXYGEN_INSULIN = 4;
+  MEDICAL_UNCONSCIOUS = 5;
+}
+
+message LocationData {
+  // Coordinates encoded with 6 decimal places (approx. 0.11m precision)
+  int32 latitude_e6 = 1;      // e.g. 19.997453 * 1e6 = 19997453
+  int32 longitude_e6 = 2;     // e.g. 73.789802 * 1e6 = 73789802
+  uint32 accuracy_meters = 3; // GPS horizontal accuracy
+}
+
+message VulnerabilityBreakdown {
+  uint32 total_affected = 1;
+  uint32 elderly_count = 2;
+  uint32 children_count = 3;
+  uint32 disabled_pregnant_count = 4;
+}
+
+message HazardIndicators {
+  bool rising_water = 1;
+  bool electrical_hazard = 2;
+  bool gas_leak = 3;
+  bool fire_smoke = 4;
+  bool structural_instability = 5;
+  bool road_blocked = 6;
+}
+
+message LifeLinkSOSPacket {
+  // Protocol Version
+  uint32 version = 1;
+
+  // Unique 16-byte Incident UUID (hex string or raw bytes)
+  string sos_id = 2;
+
+  // Device Ephemeral Identity (BitChat 8-byte Peer ID)
+  string sender_peer_id = 3;
+
+  // Origin Timestamp (UTC Epoch seconds)
+  uint64 timestamp = 4;
+
+  // Geolocation
+  LocationData location = 5;
+
+  // Emergency Profile
+  EmergencyType emergency_type = 6;
+  MedicalUrgency medical_urgency = 7;
+  VulnerabilityBreakdown vulnerability = 8;
+  HazardIndicators hazards = 9;
+
+  // Device Telemetry
+  uint32 battery_percentage = 10; // 0 - 100
+
+  // Optional short note (bounded to 64 chars to prevent BLE fragmentation)
+  string note = 11;
+
+  // Mesh Routing Metadata (Transient, updated at each hop)
+  uint32 hop_count = 12; // Initial 0, incremented by relays; TTL handled by BitChat wrapper
+  repeated string relay_path = 13; // Truncated trail of last 3 peer IDs for path tracing
+}
+
+// Two-way Responder Message (Dispatched from Command Center back into Mesh)
+message LifeLinkResponderAck {
+  string target_sos_id = 1;
+  string assigned_team_id = 2;
+  string team_callsign = 3;    // e.g., "NDRF Team Bravo-3"
+  uint32 eta_minutes = 4;
+  string instructions = 5;      // e.g., "Move to rooftop, boat approaching from East"
+  uint64 timestamp = 6;
+}

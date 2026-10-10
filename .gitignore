@@ -1,0 +1,7 @@
+.env
+NDRF_DASHBOARD/.env
+backend/.env
+LIFELINK_AI/.env
+.env.example
+__pycache__/
+*.pyc
